@@ -1,12 +1,14 @@
 import { v } from "convex/values";
 import {
+  action,
   internalAction,
   internalMutation,
   internalQuery,
   mutation,
   query,
 } from "./_generated/server.js";
-import { components, internal } from "./_generated/api.js";
+import { api, components, internal } from "./_generated/api.js";
+import type { ComponentApi } from "./_generated/component.js";
 import { Workpool } from "@convex-dev/workpool";
 import {
   vRuntimeConfig,
@@ -14,7 +16,7 @@ import {
   vSendPayload,
   type AgentMailEvent,
 } from "./shared.js";
-import type { FunctionHandle } from "convex/server";
+import type { FunctionHandle, FunctionReference } from "convex/server";
 import { agentmailFetch, AgentMailApiError, parseTimestamp } from "./utils.js";
 import {
   extractIndexFields,
@@ -40,7 +42,7 @@ const callbackPool = new Workpool(components.callbackPool, {
 // Inboxes
 // ---------------------------------------------------------------------------
 
-export const createInbox = internalAction({
+export const createInbox = action({
   args: {
     request: v.object({
       username: v.optional(v.string()),
@@ -59,7 +61,7 @@ export const createInbox = internalAction({
   },
 });
 
-export const listInboxes = internalAction({
+export const listInboxes = action({
   args: {
     limit: v.optional(v.number()),
     page_token: v.optional(v.string()),
@@ -77,7 +79,7 @@ export const listInboxes = internalAction({
   },
 });
 
-export const getInboxRemote = internalAction({
+export const getInboxRemote = action({
   args: { inboxId: v.string() },
   handler: async (ctx, args) => {
     const inbox = (await agentmailFetch(`/inboxes/${args.inboxId}`, {
@@ -88,7 +90,7 @@ export const getInboxRemote = internalAction({
   },
 });
 
-export const deleteInbox = internalAction({
+export const deleteInbox = action({
   args: { inboxId: v.string() },
   handler: async (ctx, args) => {
     await agentmailFetch(`/inboxes/${args.inboxId}`, {
@@ -362,7 +364,7 @@ export const getOutboundStatus = query({
 // Threads / messages: thin wrappers over remote API
 // ---------------------------------------------------------------------------
 
-export const listThreads = internalAction({
+export const listThreads = action({
   args: {
     inboxId: v.string(),
     limit: v.optional(v.number()),
@@ -385,7 +387,7 @@ export const listThreads = internalAction({
   },
 });
 
-export const getThread = internalAction({
+export const getThread = action({
   args: { inboxId: v.string(), threadId: v.string() },
   handler: async (_ctx, args) => {
     return await agentmailFetch(
@@ -395,7 +397,7 @@ export const getThread = internalAction({
   },
 });
 
-export const getMessage = internalAction({
+export const getMessage = action({
   args: { inboxId: v.string(), messageId: v.string() },
   handler: async (_ctx, args) => {
     return await agentmailFetch(
@@ -580,3 +582,29 @@ export const cleanupFinalizedOutbound = mutation({
     }
   },
 });
+
+// ---------------------------------------------------------------------------
+// ComponentApi contract
+// ---------------------------------------------------------------------------
+
+// _generated/component.d.ts is hand-authored, so nothing regenerates it when a
+// declaration above changes. A function it advertises that is registered
+// internal here still typechecks in the client (ctx.run* accepts internal
+// references) and only fails in the consumer's deployment, with
+// "Couldn't resolve agentmail.lib.<fn>". Fail the build instead: every
+// advertised function must be registered public, as the advertised kind,
+// accepting the advertised args. Drift fails the `never` constraint below,
+// naming a drifted function.
+type Shape<Ref> =
+  Ref extends FunctionReference<infer Kind, any, infer Args, any, any>
+    ? { kind: Kind; args: Args }
+    : never;
+type Drifted = {
+  [K in keyof ComponentApi["lib"]]: K extends keyof typeof api.lib
+    ? Shape<ComponentApi["lib"][K]> extends Shape<(typeof api.lib)[K]>
+      ? never
+      : K
+    : K;
+}[keyof ComponentApi["lib"]];
+type Assert<T extends never> = T;
+type _ComponentApiInSync = Assert<Drifted>;
