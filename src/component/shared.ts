@@ -2,8 +2,6 @@ import { type Infer, v } from "convex/values";
 import {
   type GenericActionCtx,
   type GenericDataModel,
-  type GenericMutationCtx,
-  type GenericQueryCtx,
 } from "convex/server";
 
 export const vOutboundStatus = v.union(
@@ -86,11 +84,12 @@ export const vRuntimeConfig = v.object({
 });
 export type RuntimeConfig = Infer<typeof vRuntimeConfig>;
 
+// Use the two-argument call signatures shared by actions, queries and mutations.
 export type RunQueryCtx = {
-  runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
+  runQuery: GenericActionCtx<GenericDataModel>["runQuery"];
 };
 export type RunMutationCtx = {
-  runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
+  runMutation: GenericActionCtx<GenericDataModel>["runMutation"];
 };
 export type RunActionCtx = {
   runAction: GenericActionCtx<GenericDataModel>["runAction"];
