@@ -4,7 +4,7 @@ import workpool from "@convex-dev/workpool/convex.config";
 
 const component = defineComponent("agentmail", {
   env: {
-    AGENTMAIL_API_KEY: v.optional(v.string()),
+    AGENTMAIL_API_KEY: v.string(),
     AGENTMAIL_BASE_URL: v.optional(v.string()),
   },
 });
