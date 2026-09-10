@@ -2,6 +2,8 @@ import { type Infer, v } from "convex/values";
 import {
   type GenericActionCtx,
   type GenericDataModel,
+  type GenericMutationCtx,
+  type GenericQueryCtx,
 } from "convex/server";
 
 export const vOutboundStatus = v.union(
@@ -74,7 +76,7 @@ export type AgentMailEvent = Infer<typeof vEvent>;
 
 // Non-sensitive per-instance tuning params + user callback handles. API
 // credentials are deliberately *not* in here: they're read from
-// process.env on the component side so they don't appear in Convex
+// typed env on the component side so they don't appear in Convex
 // function logs (which record every mutation's args).
 export const vRuntimeConfig = v.object({
   retryAttempts: v.number(),
@@ -84,13 +86,12 @@ export const vRuntimeConfig = v.object({
 });
 export type RuntimeConfig = Infer<typeof vRuntimeConfig>;
 
-// Use the two-argument call signatures shared by actions, queries and mutations.
-export type RunQueryCtx = {
-  runQuery: GenericActionCtx<GenericDataModel>["runQuery"];
-};
-export type RunMutationCtx = {
-  runMutation: GenericActionCtx<GenericDataModel>["runMutation"];
-};
+export type RunQueryCtx =
+  | Pick<GenericQueryCtx<GenericDataModel>, "runQuery">
+  | Pick<GenericActionCtx<GenericDataModel>, "runQuery">;
+export type RunMutationCtx =
+  | Pick<GenericMutationCtx<GenericDataModel>, "runMutation">
+  | Pick<GenericActionCtx<GenericDataModel>, "runMutation">;
 export type RunActionCtx = {
   runAction: GenericActionCtx<GenericDataModel>["runAction"];
   runMutation: GenericActionCtx<GenericDataModel>["runMutation"];
