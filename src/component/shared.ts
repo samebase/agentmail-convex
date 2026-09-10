@@ -86,12 +86,12 @@ export const vRuntimeConfig = v.object({
 });
 export type RuntimeConfig = Infer<typeof vRuntimeConfig>;
 
-export type RunQueryCtx =
-  | Pick<GenericQueryCtx<GenericDataModel>, "runQuery">
-  | Pick<GenericActionCtx<GenericDataModel>, "runQuery">;
-export type RunMutationCtx =
-  | Pick<GenericMutationCtx<GenericDataModel>, "runMutation">
-  | Pick<GenericActionCtx<GenericDataModel>, "runMutation">;
+export type RunQueryCtx = {
+  runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
+};
+export type RunMutationCtx = {
+  runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
+};
 export type RunActionCtx = {
   runAction: GenericActionCtx<GenericDataModel>["runAction"];
   runMutation: GenericActionCtx<GenericDataModel>["runMutation"];
